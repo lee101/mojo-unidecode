@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mojo-unidecode"
+version = "0.1.0"
+description = "Mojo-accelerated Unicode-to-ASCII transliteration"
+requires-python = ">=3.10"
+dependencies = ["numpy"]
+license = "GPL-2.0-or-later"
+
+[tool.setuptools]
+package-dir = {"" = "python"}
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.setuptools.package-data]
+mojo_unidecode = ["data.bin", "py.typed"]
