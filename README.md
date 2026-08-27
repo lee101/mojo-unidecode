@@ -66,18 +66,21 @@ output before timing.
 
 | Input | mojo-unidecode | Unidecode 1.4.0 | Speedup |
 |---|---:|---:|---:|
-| ASCII, 1.20M chars | 0.08 ms | 0.08 ms | 0.98x |
-| Latin, 1.20M chars | 9.80 ms | 445.48 ms | 45.45x |
-| Cyrillic, 1.08M chars | 10.08 ms | 610.13 ms | 60.55x |
-| CJK, 1.00M chars | 18.61 ms | 617.76 ms | 33.20x |
-| Mixed, 1.04M chars | 10.47 ms | 404.53 ms | 38.65x |
+| ASCII, 1.20M chars | 0.0003 ms | 0.16 ms | 464.29x |
+| Latin, 1.20M chars | 5.57 ms | 309.15 ms | 55.48x |
+| Cyrillic, 1.08M chars | 8.74 ms | 464.98 ms | 53.19x |
+| CJK, 1.00M chars | 10.34 ms | 431.59 ms | 41.74x |
+| Mixed, 1.04M chars | 5.07 ms | 313.92 ms | 61.95x |
 
-ASCII takes the same fast path as upstream and does not enter Mojo. For the
-non-ASCII workloads above, Mojo is 33.20x to 60.55x faster.
+ASCII uses Python's constant-time string metadata check and does not allocate
+an encoded copy or enter Mojo. For the non-ASCII workloads above, Mojo is
+41.74x to 61.95x faster.
 
 There is no GPU path. The work consists primarily of table lookups and short
-byte copies, for which host/device transfer and launch overhead are a poor
-fit.
+byte copies, with well under two arithmetic operations per byte moved. GPU
+transfer and launch overhead are therefore a poor fit. Parallel chunking also
+requires a prefix sum for variable-length output and is not justified for
+kernels already more than 41x ahead of upstream.
 
 ## How it works
 

@@ -117,6 +117,15 @@ def test_ascii_fast_path_preserves_identity() -> None:
     assert mojo.unidecode(text) is text
 
 
+def test_ascii_fast_path_does_not_encode() -> None:
+    class EncodingForbidden(str):
+        def encode(self, *args: object, **kwargs: object) -> bytes:
+            raise AssertionError("ASCII detection must not allocate an encoded copy")
+
+    text = EncodingForbidden("same object")
+    assert mojo.unidecode(text) is text
+
+
 def test_public_signatures_match() -> None:
     for name in ("unidecode", "unidecode_expect_ascii", "unidecode_expect_nonascii"):
         assert inspect.signature(getattr(mojo, name)) == inspect.signature(

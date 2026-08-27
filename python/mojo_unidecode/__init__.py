@@ -95,11 +95,9 @@ def _unidecode(string: str, errors: str, replace_str: str) -> str:
 def unidecode_expect_ascii(
     string: str, errors: str = "ignore", replace_str: str = "?"
 ) -> str:
-    try:
-        string.encode("ascii")
-    except UnicodeEncodeError:
-        return _unidecode(string, errors, replace_str)
-    return string
+    if string.isascii():
+        return string
+    return _unidecode(string, errors, replace_str)
 
 
 def unidecode_expect_nonascii(

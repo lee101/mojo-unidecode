@@ -33,6 +33,13 @@ def benchmark(name: str, text: str) -> tuple[str, float, float, float]:
     return name, mojo_time, upstream_time, upstream_time / mojo_time
 
 
+def format_milliseconds(seconds: float) -> str:
+    milliseconds = seconds * 1000
+    if milliseconds < 0.01:
+        return f"{milliseconds:.4f} ms"
+    return f"{milliseconds:.2f} ms"
+
+
 def main() -> None:
     cases = [
         ("ASCII, 1.20M chars", "The quick brown fox jumps over the lazy dog. " * 26_667),
@@ -54,8 +61,8 @@ def main() -> None:
     ):
         label = "faster" if ratio >= 1 else "slower"
         print(
-            f"| {name} | {mojo_time * 1000:.2f} ms | "
-            f"{upstream_time * 1000:.2f} ms | {ratio:.2f}x {label} |"
+            f"| {name} | {format_milliseconds(mojo_time)} | "
+            f"{format_milliseconds(upstream_time)} | {ratio:.2f}x {label} |"
         )
 
 
