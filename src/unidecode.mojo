@@ -46,25 +46,25 @@ def copy_bytes(
     length: Int,
 ):
     if length == 1:
-        dst.store(dst_position, source.load(source_position))
+        dst.store(dst_position, source.unsafe_load(source_position))
         return
     if length == 2:
-        dst.store(dst_position, source.load(source_position))
-        dst.store(dst_position + 1, source.load(source_position + 1))
+        dst.store(dst_position, source.unsafe_load(source_position))
+        dst.store(dst_position + 1, source.unsafe_load(source_position + 1))
         return
     if length == 3:
-        dst.store(dst_position, source.load(source_position))
-        dst.store(dst_position + 1, source.load(source_position + 1))
-        dst.store(dst_position + 2, source.load(source_position + 2))
+        dst.store(dst_position, source.unsafe_load(source_position))
+        dst.store(dst_position + 1, source.unsafe_load(source_position + 1))
+        dst.store(dst_position + 2, source.unsafe_load(source_position + 2))
         return
 
     var index = 0
     while index + W <= length:
-        var values = source.load[width=W](source_position + index)
+        var values = source.unsafe_load[width=W](source_position + index)
         dst.store(dst_position + index, values)
         index += W
     while index < length:
-        dst.store(dst_position + index, source.load(source_position + index))
+        dst.store(dst_position + index, source.unsafe_load(source_position + index))
         index += 1
 
 
@@ -82,7 +82,7 @@ def measure_ignore_range(
     surrogate_found.store(0, 0)
 
     while index + W <= end:
-        var values = codepoints.load[width=W](index)
+        var values = codepoints.unsafe_load[width=W](index)
         var ascii_mask = values.lt(0x80)
         var ascii_sizes = ascii_mask.select(
             SIMD[DType.uint32, W](1),
@@ -97,19 +97,19 @@ def measure_ignore_range(
             if (
                 codepoint >= 0x80
                 and codepoint < table_size
-                and offsets.load(codepoint) >= 0
+                and offsets.unsafe_load(codepoint) >= 0
             ):
-                total += Int(lengths.load(codepoint))
+                total += Int(lengths.unsafe_load(codepoint))
         if (values.ge(0xD800) & values.le(0xDFFF)).reduce_or():
             surrogate_found.store(0, 1)
         index += W
 
     while index < end:
-        var codepoint = Int(codepoints.load(index))
+        var codepoint = Int(codepoints.unsafe_load(index))
         if codepoint < 0x80:
             total += 1
-        elif codepoint < table_size and offsets.load(codepoint) >= 0:
-            total += Int(lengths.load(codepoint))
+        elif codepoint < table_size and offsets.unsafe_load(codepoint) >= 0:
+            total += Int(lengths.unsafe_load(codepoint))
         if codepoint >= 0xD800 and codepoint <= 0xDFFF:
             surrogate_found.store(0, 1)
         index += 1
@@ -156,13 +156,13 @@ def mud_measure(
         )
 
     for index in range(count):
-        var codepoint = Int(codepoints.load(index))
+        var codepoint = Int(codepoints.unsafe_load(index))
         if codepoint >= 0xD800 and codepoint <= 0xDFFF:
             surrogate_found.store(0, 1)
         if codepoint < 0x80:
             total += 1
-        elif codepoint < table_size and offsets.load(codepoint) >= 0:
-            total += Int(lengths.load(codepoint))
+        elif codepoint < table_size and offsets.unsafe_load(codepoint) >= 0:
+            total += Int(lengths.unsafe_load(codepoint))
         elif mode == 1:
             total += replacement_length
         elif mode == 2:
@@ -193,9 +193,9 @@ def transliterate_range(
     var index = start
 
     while index + W <= end:
-        var codepoint = Int(codepoints.load(index))
+        var codepoint = Int(codepoints.unsafe_load(index))
         if codepoint < 0x80:
-            var values = codepoints.load[width=W](index)
+            var values = codepoints.unsafe_load[width=W](index)
             if values.lt(0x80).reduce_and():
                 if position > dst_capacity - W:
                     return -1
@@ -212,9 +212,9 @@ def transliterate_range(
             continue
 
         if codepoint < table_size:
-            var offset = Int(offsets.load(codepoint))
+            var offset = Int(offsets.unsafe_load(codepoint))
             if offset >= 0:
-                var length = Int(lengths.load(codepoint))
+                var length = Int(lengths.unsafe_load(codepoint))
                 if length > dst_capacity - position:
                     return -1
                 copy_bytes(dst, position, table, offset, length)
@@ -236,7 +236,7 @@ def transliterate_range(
         index += 1
 
     while index < end:
-        var codepoint = Int(codepoints.load(index))
+        var codepoint = Int(codepoints.unsafe_load(index))
         if codepoint < 0x80:
             if position >= dst_capacity:
                 return -1
@@ -246,9 +246,9 @@ def transliterate_range(
             continue
 
         if codepoint < table_size:
-            var offset = Int(offsets.load(codepoint))
+            var offset = Int(offsets.unsafe_load(codepoint))
             if offset >= 0:
-                var length = Int(lengths.load(codepoint))
+                var length = Int(lengths.unsafe_load(codepoint))
                 if length > dst_capacity - position:
                     return -1
                 copy_bytes(dst, position, table, offset, length)
